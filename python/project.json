@@ -1,0 +1,5 @@
+{
+  "name": "python",
+  "description": "Python example project",
+  "role": "arn:aws:iam::317686568678:role/AWS_Lambda_APIGateway_Step_Role"
+}
