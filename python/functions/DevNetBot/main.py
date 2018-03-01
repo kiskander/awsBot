@@ -6,9 +6,13 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+####LINES NUMBERS NEEDING YOUR ATTENTION ARE
+# LINE 13 | 14 | 97 | 98
+
+
 ### Step #1 Capture Your Bot Info Here ###
 BotToken = '' # YOUR BOT TOKEN HERE
-BotID = '' # YOUR BOT ID HERE
+BotEmail = '' # YOUR BOT's EMAIL <XXXXXXX@sparkbot.io>
 
 
 def handle(event, context):
@@ -36,7 +40,7 @@ def decode_msg(data, at):
     resp = Spark.get_message(at, data['data']['id'])
     logger.info('3 on get_message{}'.format(resp))
     resp['text'] = clean_text(resp['text'])
-    if resp['personId'] != BotID: #Bot ID prevents infinit msg
+    if resp['personEmail'] != BotEmail: #Bot ID prevents infinit msg
         logger.info('4 on decode_msg{}'.format(resp))
         on_bot_chat(resp, at)
 
@@ -45,8 +49,7 @@ def on_bot_chat(data, at):
     trig = data['text'].split()
     logger.info('Trigger word'.format(trig[0].lower()))
     if trig[0].lower() in ['beer', 'beers', 'mybeer']:
-        pass
-        #get_beer(data, at)
+        get_beer(data, at)
     else:
         Spark.post_markdown(at, data['roomId'], data['text'])
 
@@ -57,26 +60,41 @@ def get_beer(data, at):
     resp = requests.get(url)
     logger.info('5 got BeerDB{}'.format(resp.json()))
 
+    name = 'N/A'
+    abv = 'N/A'
+    ibu = 'N/A'
+    style = 'N/A'
+    desc = 'N/A'
+    icon = 'beer.png'
+
     beerInfo = resp.json()
+
+    ## Check for Keys
+    if 'abvMax' in beerInfo['data'][0]['style']:
+        abv = beerInfo['data'][0]['style']['abvMax']
+    if 'ibuMax' in beerInfo['data'][0]['style']:
+        ibu = beerInfo['data'][0]['style']['ibuMax']
+    if 'shortName' in beerInfo['data'][0]['style']:
+        style = beerInfo['data'][0]['style']['shortName']
+    if 'description' in beerInfo['data'][0]['style']:
+        desc = beerInfo['data'][0]['style']['description']
+    if 'labels' in beerInfo['data'][0]:
+        icon = beerInfo['data'][0]['labels']['large']
+
     beer = '## ' + beerInfo['data'][0]['nameDisplay'] + "\n" +\
-           '* ABV: **' + beerInfo['data'][0]['style']['abvMax'] + '%**' + "\n" +\
-           '* IBU: **' + beerInfo['data'][0]['style']['ibuMax'] + '**' + "\n" +\
-           '* Syle: **' + beerInfo['data'][0]['style']['shortName'] + '**' + "\n" +\
-           '* Desc: *' + beerInfo['data'][0]['style']['description'] + '*'
+           '* ABV: **' + abv + '%**' + "\n" +\
+           '* IBU: **' + ibu + '**' + "\n" +\
+           '* Syle: **' + style + '**' + "\n" +\
+           '* Desc: *' + desc + '*'
 
-    beerIcon = beerInfo['data'][0]['labels']['large']
-    _thread.start_new_thread(post_logo, (at, data, beerIcon))
+    _thread.start_new_thread(Spark.post_file, (at, data, icon))
     Spark.post_markdown(at, data['roomId'], beer)
-
-
-def post_logo(at, data, beerIcon):
-    Spark.post_file(at, data['roomId'], beerIcon)
 
 
 def clean_text(txt):
     txt = txt.lower()
-    txt = txt.replace("testtie ", "") ###### Add your bot name Here
-    txt = txt.replace("@testtie ", "") ###### Add your bot name Here with @
+    txt = txt.replace(" ", "") ###### Add your bot name Here
+    txt = txt.replace("@ ", "") ###### Add your bot name Here with @
     txt = txt.replace("?","")
     txt = txt.replace("/", "")
     txt = txt.replace("!", "")
