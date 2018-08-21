@@ -6,7 +6,6 @@ import requests
 import json
 import ntpath
 import re
-from pymongo import MongoClient
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 
@@ -35,17 +34,6 @@ def findroomidbyname(at, roomname):
 
 
 # GET Requests
-def get_token():
-    client = MongoClient("mongodb://kiskander:peaceD00d@ds013162.mlab.com:13162/spark")
-    db = client.get_default_database()
-    spark = db['spark']
-    query = {'username': 'Feedback'}
-    cursor = spark.find(query)
-    for doc in cursor:
-        accessToken = doc['accessToken']
-    return accessToken
-
-
 def get_people(at, email='', displayname='', max=10):
     headers = {'Authorization': _fix_at(at)}
     payload = {'max': max}
